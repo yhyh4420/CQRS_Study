@@ -42,7 +42,7 @@ class PostApiIntegrationTest {
 
         // 2. 대기 (Eventual Consistency)
         // 이벤트가 처리되어 Elasticsearch에 데이터가 저장될 때까지 잠시 대기합니다.
-        Thread.sleep(1000);
+        Thread.sleep(100);
 
         // 3. 조회 (Query)
         mockMvc.perform(get("/posts/" + postId))
