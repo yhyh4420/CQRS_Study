@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: cqrs-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: cqrs_study
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  elasticsearch:
+    image: elasticsearch:8.11.1
+    container_name: cqrs-elasticsearch
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false # 개발 편의를 위해 보안 기능 비활성화
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+
+volumes:
+  mysql-data:
+  es-data:
