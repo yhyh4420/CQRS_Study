@@ -3,27 +3,28 @@ package practice.cqrsstudy.query;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import practice.cqrsstudy.domain.Post;
-import practice.cqrsstudy.domain.PostRepository;
+import practice.cqrsstudy.query.document.PostDocument;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class PostQueryService {
 
-    private final PostRepository postRepository; // Command와 동일한 리포지토리를 사용
+    private final PostSearchRepository postSearchRepository; // Read-Model Repository
 
     public PostResponseDto findPostById(Long id) {
-        Post post = postRepository.findById(id)
+        PostDocument postDocument = postSearchRepository.findById(id.toString())
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 없습니다. id=" + id));
-        return new PostResponseDto(post);
+        return new PostResponseDto(postDocument);
     }
 
     public List<PostResponseDto> findAllPosts() {
-        return postRepository.findAll().stream()
+        Iterable<PostDocument> postDocuments = postSearchRepository.findAll();
+        return StreamSupport.stream(postDocuments.spliterator(), false)
                 .map(PostResponseDto::new)
                 .collect(Collectors.toList());
     }
