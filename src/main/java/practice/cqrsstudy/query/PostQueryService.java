@@ -3,6 +3,7 @@ package practice.cqrsstudy.query;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import practice.cqrsstudy.query.document.PostCount;
 import practice.cqrsstudy.query.document.PostDocument;
 
 import java.util.List;
@@ -15,6 +16,9 @@ import java.util.stream.StreamSupport;
 public class PostQueryService {
 
     private final PostSearchRepository postSearchRepository; // Read-Model Repository
+    private final PostCountRepository postCountRepository;
+
+    private static final String POST_COUNT_ID = "POST_COUNT";
 
     public PostResponseDto findPostById(Long id) {
         PostDocument postDocument = postSearchRepository.findById(id.toString())
@@ -27,5 +31,11 @@ public class PostQueryService {
         return StreamSupport.stream(postDocuments.spliterator(), false)
                 .map(PostResponseDto::new)
                 .collect(Collectors.toList());
+    }
+
+    public long getPostCount() {
+        PostCount postCount = postCountRepository.findById(POST_COUNT_ID)
+                .orElse(PostCount.builder().id(POST_COUNT_ID).count(0L).build());
+        return postCount.getCount();
     }
 }

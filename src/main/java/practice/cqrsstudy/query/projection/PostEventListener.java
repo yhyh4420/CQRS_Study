@@ -8,7 +8,9 @@ import practice.cqrsstudy.command.event.PostDeletedEvent;
 import practice.cqrsstudy.command.event.PostUpdatedEvent;
 import practice.cqrsstudy.domain.Post;
 import practice.cqrsstudy.domain.PostRepository;
+import practice.cqrsstudy.query.PostCountRepository;
 import practice.cqrsstudy.query.PostSearchRepository;
+import practice.cqrsstudy.query.document.PostCount;
 import practice.cqrsstudy.query.document.PostDocument;
 
 @Component
@@ -17,6 +19,9 @@ public class PostEventListener {
 
     private final PostRepository postRepository; // Write-Model Repository
     private final PostSearchRepository postSearchRepository; // Read-Model Repository
+    private final PostCountRepository postCountRepository;
+
+    private static final String POST_COUNT_ID = "POST_COUNT";
 
     @TransactionalEventListener
     public void handlePostCreatedEvent(PostCreatedEvent event) {
@@ -28,6 +33,11 @@ public class PostEventListener {
                 .title(post.getTitle())
                 .content(post.getContent())
                 .build());
+
+        PostCount postCount = postCountRepository.findById(POST_COUNT_ID)
+                .orElse(PostCount.builder().id(POST_COUNT_ID).count(0L).build());
+        postCount.increase();
+        postCountRepository.save(postCount);
     }
 
     @TransactionalEventListener
@@ -45,5 +55,10 @@ public class PostEventListener {
     @TransactionalEventListener
     public void handlePostDeletedEvent(PostDeletedEvent event) {
         postSearchRepository.deleteById(event.getPostId().toString());
+
+        PostCount postCount = postCountRepository.findById(POST_COUNT_ID)
+                .orElse(PostCount.builder().id(POST_COUNT_ID).count(0L).build());
+        postCount.decrease();
+        postCountRepository.save(postCount);
     }
 }
