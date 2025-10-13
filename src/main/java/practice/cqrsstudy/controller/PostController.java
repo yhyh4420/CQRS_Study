@@ -46,4 +46,9 @@ public class PostController {
         List<PostResponseDto> posts = postService.findAllPosts();
         return ResponseEntity.ok(posts);
     }
+
+    @GetMapping("/count")
+    public ResponseEntity<Long> getPostCount() {
+        return ResponseEntity.ok(postService.getPostCount());
+    }
 }

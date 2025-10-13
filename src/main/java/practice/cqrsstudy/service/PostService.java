@@ -47,4 +47,9 @@ public class PostService {
                 .map(PostResponseDto::new)
                 .collect(Collectors.toList());
     }
+
+    @Transactional(readOnly = true)
+    public long getPostCount() {
+        return postRepository.count();
+    }
 }
