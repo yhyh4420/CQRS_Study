@@ -1,6 +1,7 @@
 package practice.cqrsstudy.interfaces.web;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import practice.cqrsstudy.command.PostCommandService;
@@ -8,9 +9,10 @@ import practice.cqrsstudy.command.PostCreateRequestDto;
 import practice.cqrsstudy.command.PostUpdateRequestDto;
 import practice.cqrsstudy.query.PostQueryService;
 import practice.cqrsstudy.query.PostResponseDto;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.net.URI;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -22,38 +24,43 @@ public class PostController {
 
     // Command
     @PostMapping
-    public ResponseEntity<Void> createPost(@RequestBody PostCreateRequestDto requestDto) {
-        Long postId = postCommandService.createPost(requestDto);
-        return ResponseEntity.created(URI.create("/posts/" + postId)).build();
+    public Mono<ResponseEntity<Void>> createPost(@RequestBody Mono<PostCreateRequestDto> requestDtoMono) {
+        return requestDtoMono
+                .map(postCommandService::createPost)
+                .map(postId -> ResponseEntity.created(URI.create("/posts/" + postId)).build());
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Void> updatePost(@PathVariable Long id, @RequestBody PostUpdateRequestDto requestDto) {
-        postCommandService.updatePost(id, requestDto);
-        return ResponseEntity.ok().build();
+    public Mono<ResponseEntity<Void>> updatePost(@PathVariable Long id, @RequestBody Mono<PostUpdateRequestDto> requestDtoMono) {
+        return requestDtoMono
+                .map(requestDto -> {
+                    postCommandService.updatePost(id, requestDto);
+                    return ResponseEntity.ok().build();
+                });
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePost(@PathVariable Long id) {
-        postCommandService.deletePost(id);
-        return ResponseEntity.noContent().build();
+    public Mono<ResponseEntity<Void>> deletePost(@PathVariable Long id) {
+        return Mono.fromRunnable(() -> postCommandService.deletePost(id))
+                .then(Mono.just(ResponseEntity.noContent().build()));
     }
 
     // Query
     @GetMapping("/{id}")
-    public ResponseEntity<PostResponseDto> findPostById(@PathVariable Long id) {
-        PostResponseDto post = postQueryService.findPostById(id);
-        return ResponseEntity.ok(post);
+    public Mono<ResponseEntity<PostResponseDto>> findPostById(@PathVariable Long id) {
+        return Mono.justOrEmpty(postQueryService.findPostById(id))
+                .map(ResponseEntity::ok)
+                .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @GetMapping
-    public ResponseEntity<List<PostResponseDto>> findAllPosts() {
-        List<PostResponseDto> posts = postQueryService.findAllPosts();
-        return ResponseEntity.ok(posts);
+    public Flux<PostResponseDto> findAllPosts() {
+        return Flux.fromIterable(postQueryService.findAllPosts());
     }
 
     @GetMapping("/count")
-    public ResponseEntity<Long> getPostCount() {
-        return ResponseEntity.ok(postQueryService.getPostCount());
+    public Mono<ResponseEntity<Long>> getPostCount() {
+        return Mono.just(postQueryService.getPostCount())
+                .map(ResponseEntity::ok);
     }
 }
